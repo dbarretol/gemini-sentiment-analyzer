@@ -1,17 +1,33 @@
 import os
 import json
-from enum import Enum
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
 
-class SentimentEnum(str, Enum):
-    positivo = "positivo"
-    negativo = "negativo"
-    neutro = "neutro"
+ALLOWED = {"positivo", "negativo", "neutro"}
+
+
+# JSON schema (formato "OBJECT" / "ARRAY" que usa el SDK)
+RESPONSE_SCHEMA = {
+    "type": "OBJECT",
+    "required": ["results"],
+    "properties": {
+        "results": {
+            "type": "ARRAY",
+            "items": {
+                "type": "OBJECT",
+                "required": ["id", "label"],
+                "properties": {
+                    "id": {"type": "INTEGER"},
+                    "label": {"type": "STRING"}  # positivo|negativo|neutro
+                },
+            },
+        }
+    },
+}
 
 
 def load_comments(path: str) -> List[Dict[str, Any]]:
@@ -20,28 +36,69 @@ def load_comments(path: str) -> List[Dict[str, Any]]:
     return data.get("comments", [])
 
 
-def classify_comment(client: genai.Client, text: str) -> str:
+def chunk_list(items: List[Any], size: int) -> List[List[Any]]:
+    return [items[i : i + size] for i in range(0, len(items), size)]
+
+
+def normalize_results(results: List[Dict[str, Any]], ids_expected: List[int]) -> List[Dict[str, Any]]:
+    """Asegura que haya un resultado por id y que label sea válido."""
+    by_id = {}
+    for r in results or []:
+        try:
+            rid = int(r.get("id"))
+        except Exception:
+            continue
+        label = str(r.get("label", "")).lower().strip()
+        if label not in ALLOWED:
+            label = "neutro"
+        by_id[rid] = {"id": rid, "label": label}
+
+    # Completa faltantes como neutro
+    out = []
+    for cid in ids_expected:
+        out.append(by_id.get(cid, {"id": cid, "label": "neutro"}))
+    return out
+
+
+def classify_batch(client: genai.Client, comments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    ids = [int(c["id"]) for c in comments]
+
+    # Mandamos los comentarios como JSON al modelo para minimizar ambigüedad
+    payload = [{"id": int(c["id"]), "text": str(c["text"])} for c in comments]
+
     prompt = (
-        "Clasifica el siguiente comentario de redes sociales en español "
-        "como positivo, negativo o neutro.\n\n"
-        f"Comentario: {text}"
+        "Clasifica el sentimiento de cada comentario de redes sociales en español.\n"
+        "Etiquetas permitidas: positivo, negativo, neutro.\n"
+        "Devuelve un JSON con la misma cantidad de elementos que entradas.\n"
+        "No inventes ids; usa exactamente los ids dados.\n"
     )
 
     resp = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=prompt,
+        contents=[
+            prompt,
+            "ENTRADAS (JSON):",
+            json.dumps(payload, ensure_ascii=False),
+        ],
         config=types.GenerateContentConfig(
             temperature=0,
-            response_mime_type="text/x.enum",
-            response_schema=SentimentEnum,  # fuerza una de las 3 etiquetas
+            response_mime_type="application/json",
+            response_schema=RESPONSE_SCHEMA,
         ),
     )
 
-    label = (resp.text or "").strip().lower()
-    if label not in {s.value for s in SentimentEnum}:
-        # fallback defensivo (raro con enum)
-        return "neutro"
-    return label
+    # Con response_schema normalmente viene parseado:
+    parsed = getattr(resp, "parsed", None)
+    if isinstance(parsed, dict) and "results" in parsed:
+        return normalize_results(parsed.get("results", []), ids)
+
+    # Fallback si por alguna razón no viene parsed
+    try:
+        raw = (resp.text or "").strip()
+        data = json.loads(raw)
+        return normalize_results(data.get("results", []), ids)
+    except Exception:
+        return [{"id": cid, "label": "neutro"} for cid in ids]
 
 
 def main():
@@ -49,23 +106,39 @@ def main():
 
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
-        raise RuntimeError("Falta GEMINI_API_KEY en tu .env (o GOOGLE_API_KEY).")
+        raise RuntimeError("Falta GEMINI_API_KEY en el .env (o GOOGLE_API_KEY).")
 
     client = genai.Client(api_key=api_key)
 
     comments = load_comments("comments.json")
-    results = []
+    if not comments:
+        raise RuntimeError("No hay comentarios en comments.json")
 
+    # 1 llamada si son pocos.
+    # Si en el futuro metes cientos/miles, esto evita sobrepasar tokens.
+    CHUNK_SIZE = 50  # para tus 30, será 1 sola llamada
+
+    all_results: List[Dict[str, Any]] = []
+    for part in chunk_list(comments, CHUNK_SIZE):
+        part_results = classify_batch(client, part)
+        all_results.extend(part_results)
+
+    # Unimos label con texto original para imprimir y guardar
+    by_id = {r["id"]: r["label"] for r in all_results}
+    merged = []
     for c in comments:
-        cid = c.get("id")
-        text = c.get("text", "")
-        label = classify_comment(client, text)
+        cid = int(c["id"])
+        merged.append(
+            {"id": cid, "text": c["text"], "label": by_id.get(cid, "neutro")}
+        )
 
-        results.append({"id": cid, "text": text, "label": label})
-        print(f"[{cid}] {label} - {text}")
+    # imprime
+    for r in merged:
+        print(f'[{r["id"]}] {r["label"]} - {r["text"]}')
 
+    # guarda
     with open("results.json", "w", encoding="utf-8") as f:
-        json.dump({"results": results}, f, ensure_ascii=False, indent=2)
+        json.dump({"results": merged}, f, ensure_ascii=False, indent=2)
 
     client.close()
 

@@ -1,0 +1,154 @@
+{
+  "results": [
+    {
+      "id": 1,
+      "text": "Me encantó el producto, llegó rapidísimo.",
+      "label": "positivo"
+    },
+    {
+      "id": 2,
+      "text": "Pésimo servicio, nadie responde y perdí mi dinero.",
+      "label": "negativo"
+    },
+    {
+      "id": 3,
+      "text": "Ok, gracias por la info.",
+      "label": "neutro"
+    },
+    {
+      "id": 4,
+      "text": "Excelente atención, resolvieron mi problema en minutos.",
+      "label": "positivo"
+    },
+    {
+      "id": 5,
+      "text": "No funciona como prometen, es una estafa.",
+      "label": "negativo"
+    },
+    {
+      "id": 6,
+      "text": "Está bien, cumple lo básico.",
+      "label": "neutro"
+    },
+    {
+      "id": 7,
+      "text": "La calidad se siente premium, muy recomendable.",
+      "label": "positivo"
+    },
+    {
+      "id": 8,
+      "text": "Horrible, me llegó roto y no aceptan devolución.",
+      "label": "negativo"
+    },
+    {
+      "id": 9,
+      "text": "¿Alguien sabe si hay envíos a Monterrey?",
+      "label": "neutro"
+    },
+    {
+      "id": 10,
+      "text": "Qué buena actualización, ahora va mucho más rápido.",
+      "label": "positivo"
+    },
+    {
+      "id": 11,
+      "text": "La app se traba todo el tiempo, qué frustración.",
+      "label": "negativo"
+    },
+    {
+      "id": 12,
+      "text": "El diseño está bonito, aunque el precio es algo alto.",
+      "label": "neutro"
+    },
+    {
+      "id": 13,
+      "text": "Increíble compra, superó mis expectativas.",
+      "label": "positivo"
+    },
+    {
+      "id": 14,
+      "text": "Me cobraron doble y el soporte no ayuda.",
+      "label": "negativo"
+    },
+    {
+      "id": 15,
+      "text": "¿Cuándo reponen stock?",
+      "label": "neutro"
+    },
+    {
+      "id": 16,
+      "text": "Funciona perfecto, justo lo que necesitaba.",
+      "label": "positivo"
+    },
+    {
+      "id": 17,
+      "text": "No vale la pena, se descompuso a la semana.",
+      "label": "negativo"
+    },
+    {
+      "id": 18,
+      "text": "Está ok, ni bien ni mal.",
+      "label": "neutro"
+    },
+    {
+      "id": 19,
+      "text": "Buen producto, pero el envío tardó más de lo esperado.",
+      "label": "neutro"
+    },
+    {
+      "id": 20,
+      "text": "Gracias por la ayuda, excelente soporte.",
+      "label": "positivo"
+    },
+    {
+      "id": 21,
+      "text": "Qué basura, me arrepiento de comprarlo.",
+      "label": "negativo"
+    },
+    {
+      "id": 22,
+      "text": "¿Esto es compatible con Android 14?",
+      "label": "neutro"
+    },
+    {
+      "id": 23,
+      "text": "Muy buena relación calidad-precio.",
+      "label": "positivo"
+    },
+    {
+      "id": 24,
+      "text": "No me llegó el pedido todavía, ¿qué pasó?",
+      "label": "negativo"
+    },
+    {
+      "id": 25,
+      "text": "Meh, está regular.",
+      "label": "neutro"
+    },
+    {
+      "id": 26,
+      "text": "La interfaz es intuitiva, felicidades al equipo.",
+      "label": "positivo"
+    },
+    {
+      "id": 27,
+      "text": "No entiendo cómo configurarlo, necesito ayuda.",
+      "label": "negativo"
+    },
+    {
+      "id": 28,
+      "text": "Genial, compra 10/10.",
+      "label": "positivo"
+    },
+    {
+      "id": 29,
+      "text": "Terrible experiencia, no lo recomiendo.",
+      "label": "negativo"
+    },
+    {
+      "id": 30,
+      "text": "Recibido, quedo atento.",
+      "label": "neutro"
+    }
+  ]
+}
